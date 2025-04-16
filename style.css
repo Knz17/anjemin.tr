@@ -7,6 +7,7 @@ body {
     color: #333;
   }
   
+  
   .navbar {
     display: flex;
     justify-content: space-between;
@@ -160,4 +161,5 @@ body {
     padding: 1rem;
     margin-top: 2rem;
   }
+  
   

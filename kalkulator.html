@@ -1,0 +1,190 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Tarif Anjem</title>
+  <style>
+    body {
+      font-family: 'Segoe UI', sans-serif;
+      background-color: #f9f9f9;
+      max-width: 600px;
+      margin: 30px auto;
+      padding: 20px;
+      border-radius: 12px;
+      box-shadow: 0 0 10px rgba(0,0,0,0.1);
+    }
+    h2 {
+      text-align: center;
+      color: #333;
+    }
+    label {
+      display: block;
+      margin-top: 12px;
+      font-weight: bold;
+    }
+    input[type="number"], input[type="text"] {
+      width: 100%;
+      padding: 8px;
+      margin-top: 4px;
+      border: 1px solid #ccc;
+      border-radius: 6px;
+    }
+    .checkbox,
+    .radio-group {
+      margin-top: 10px;
+    }
+    .radio-group label {
+      font-weight: normal;
+      display: block;
+      margin-left: 20px;
+    }
+    button {
+      margin-top: 20px;
+      width: 100%;
+      padding: 10px;
+      background-color: #fffdd0;
+      color: rgb(0, 0, 0);
+      border: none;
+      border-radius: 6px;
+      font-size: 16px;
+      cursor: pointer;
+    }
+    button:hover {
+      background-color: #ffd700;
+    }
+    .result {
+      margin-top: 20px;
+      font-size: 18px;
+      font-weight: bold;
+      text-align: center;
+      white-space: pre-line;
+    }
+  </style>
+</head>
+<body>
+  <h2>Tarif Anjem / Jastip</h2>
+
+  <label for="jarak">Jarak Tempuh (km):</label>
+  <input type="number" id="jarak" step="0.1" placeholder="Contoh: 3.7">
+
+  <div class="checkbox">
+    <label><input type="checkbox" id="parkir"> Tambah Biaya Parkir (Rp2.000)</label>
+  </div>
+
+  <div class="radio-group">
+    <label>Cuaca:</label>
+    <label><input type="radio" name="cuaca" value="cerah" checked> Cerah</label>
+    <label><input type="radio" name="cuaca" value="ringan"> Hujan Ringan (+Rp1.000)</label>
+    <label><input type="radio" name="cuaca" value="deras"> Hujan Deras (+Rp2.000)</label> 
+  </div>
+
+  <div class="radio-group">
+    <label>Pindah Titik?</label>
+    <label><input type="radio" name="move" value="tidak" checked> Tidak</label>
+    <label><input type="radio" name="move" value="pindah"> Ya (+Rp1.000)</label>
+  </div>
+
+  <div class="radio-group">
+    <label>Ramai?</label>
+    <label><input type="radio" name="ramai" value="tidak" checked > Tidak</label>
+    <label><input type="radio" name="ramai" value="ramai"> Ya (+Rp2.000)</label>
+  </div>
+
+  <label for="pesanan">Titipan / Pesanan (Nama - Harga, pisahkan baris baru):</label>
+  <input type="text" id="pesanan" placeholder="Contoh: Ayam Geprek - 18000\nEs Teh - 5000">
+
+  <label>Metode Pembayaran:</label>
+  <label><input type="radio" name="pembayaran" value="Cash" checked> Cash</label>
+  <label><input type="radio" name="pembayaran" value="QRIS"> QRIS</label>
+  <label><input type="radio" name="pembayaran" value="Transfer"> Transfer</label>
+
+  <div class="checkbox">
+    <label><input type="checkbox" id="pp"> Simulasi Bolak-Balik</label>
+  </div>
+
+  <button onclick="hitungTarif()">Hitung Tarif</button>
+  <button onclick="kirimWhatsApp()">Kirim ke WhatsApp</button>
+
+  <div class="result" id="hasil"></div>
+
+  <script>
+    function hitungTarif() {
+      const jarak = parseFloat(document.getElementById("jarak").value);
+      const parkir = document.getElementById("parkir").checked;
+      const cuaca = document.querySelector('input[name="cuaca"]:checked').value;
+      const move = document.querySelector('input[name="move"]:checked').value;
+      const ramai = document.querySelector('input[name="ramai"]:checked').value;
+      const pesananInput = document.getElementById("pesanan").value;
+      const metode = document.querySelector('input[name="pembayaran"]:checked').value;
+      const bolakBalik = document.getElementById("pp").checked;
+
+      if (isNaN(jarak) || jarak <= 0) {
+        document.getElementById("hasil").textContent = "Masukkan jarak yang valid!";
+        return;
+      }
+
+      let tarif = 0;
+      if (jarak <= 2) {
+        tarif = 4000;
+      } else if (jarak <= 6) {
+        if (jarak <= 3) tarif = 7000;
+        else if (jarak <= 3.5) tarif = 8500;
+        else if (jarak <= 4) tarif = 10000;
+        else if (jarak <= 4.5) tarif = 11500;
+        else if (jarak <= 5) tarif = 13000;
+        else if (jarak <= 5.5) tarif = 14500;
+        else tarif = 15000;
+      } else if (jarak <= 10) {
+        if (jarak <= 7) tarif = 17000;
+        else if (jarak <= 8) tarif = 18000;
+        else if (jarak <= 9) tarif = 19000;
+        else tarif = 20000;
+      } else {
+        tarif = 21000 + Math.ceil(jarak - 11) * 1000;
+      }
+
+      if (parkir) tarif += 2000;
+      if (cuaca === "ringan") tarif += 1000;
+      if (cuaca === "deras") tarif += 2000;
+      if (move === "pindah") tarif += 1000;
+      if (ramai === "ramai") tarif += 2000;
+      if (bolakBalik) tarif *= 2;
+
+      let totalPesanan = 0;
+      let rincianPesanan = "";
+      if (pesananInput.trim() !== "") {
+        const items = pesananInput.split('\n');
+        items.forEach(item => {
+          const [nama, harga] = item.split("-");
+          const h = parseInt(harga);
+          if (!isNaN(h)) {
+            rincianPesanan += `\n- ${nama.trim()}: Rp${h.toLocaleString()}`;
+            totalPesanan += h;
+          }
+        });
+      } else {
+        rincianPesanan = "\n(Tidak ada)";
+      }
+
+      const totalBayar = tarif + totalPesanan;
+
+      const hasil = `📦 Rincian Jastip 📦\n\nPesanan:${rincianPesanan}\n\nJarak: ${jarak} km\nMetode Bayar: ${metode}\nCuaca: ${cuaca}\nParkir: ${parkir ? "Ya" : "Tidak"}\nPindah Titik: ${move === "pindah" ? "Ya" : "Tidak"}\nRamai: ${ramai === "ramai" ? "Ya" : "Tidak"}\nBolak-balik: ${bolakBalik ? "Ya" : "Tidak"}\n\nTarif Jasa: Rp${tarif.toLocaleString()}\nTotal Pesanan: Rp${totalPesanan.toLocaleString()}\n\n💰 Total Bayar: Rp${totalBayar.toLocaleString()}`;
+
+      document.getElementById("hasil").textContent = hasil;
+    }
+
+    function kirimWhatsApp() {
+      const hasil = document.getElementById("hasil").innerText;
+      if (!hasil) {
+        alert("Silakan hitung tarif dulu!");
+        return;
+      }
+      const nomor = prompt("Masukkan nomor WhatsApp customer (tanpa +62):");
+      if (!nomor) return;
+      const link = `https://wa.me/62${nomor}?text=${encodeURIComponent(hasil)}`;
+      window.open(link, "_blank");
+    }
+  </script>
+</body>
+</html>
