@@ -3,67 +3,47 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Tarif Anjem</title>
+  <title>Tarif Anjemin aja</title>
+  <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css" />
+  <link rel="stylesheet" href="https://unpkg.com/leaflet-routing-machine@latest/dist/leaflet-routing-machine.css" />
+  <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
+  <script src="https://unpkg.com/leaflet-routing-machine@latest/dist/leaflet-routing-machine.min.js"></script>
+
   <style>
     body {
       font-family: 'Segoe UI', sans-serif;
       background-color: #f9f9f9;
-      max-width: 600px;
+      max-width: 700px;
       margin: 30px auto;
       padding: 20px;
       border-radius: 12px;
       box-shadow: 0 0 10px rgba(0,0,0,0.1);
     }
-    h2 {
-      text-align: center;
-      color: #333;
-    }
-    label {
-      display: block;
-      margin-top: 12px;
-      font-weight: bold;
-    }
+    h2 { text-align: center; color: #333; }
+    label { display: block; margin-top: 12px; font-weight: bold; }
     input[type="number"], input[type="text"] {
-      width: 100%;
-      padding: 8px;
-      margin-top: 4px;
-      border: 1px solid #ccc;
-      border-radius: 6px;
+      width: 100%; padding: 8px; margin-top: 4px;
+      border: 1px solid #ccc; border-radius: 6px;
     }
-    .checkbox,
-    .radio-group {
-      margin-top: 10px;
-    }
-    .radio-group label {
-      font-weight: normal;
-      display: block;
-      margin-left: 20px;
-    }
+    .checkbox, .radio-group { margin-top: 10px; }
+    .radio-group label { font-weight: normal; display: block; margin-left: 20px; }
     button {
-      margin-top: 20px;
-      width: 100%;
-      padding: 10px;
-      background-color: #fffdd0;
-      color: rgb(0, 0, 0);
-      border: none;
-      border-radius: 6px;
-      font-size: 16px;
+      margin-top: 20px; width: 100%; padding: 10px;
+      background-color: #fffdd0; color: black;
+      border: none; border-radius: 6px; font-size: 16px;
       cursor: pointer;
     }
-    button:hover {
-      background-color: #ffd700;
-    }
+    button:hover { background-color: #ffd700; }
     .result {
-      margin-top: 20px;
-      font-size: 18px;
-      font-weight: bold;
-      text-align: center;
-      white-space: pre-line;
+      margin-top: 20px; font-size: 18px; font-weight: bold;
+      text-align: center; white-space: pre-line;
     }
+    #map { height: 300px; margin-bottom: 20px; border-radius: 12px; }
   </style>
 </head>
 <body>
-  <h2>Tarif Anjem / Jastip</h2>
+  <h2>Kalkulator Tarif Anjem / Jastip</h2>
+  <div id="map"></div>
 
   <label for="jarak">Jarak Tempuh (km):</label>
   <input type="number" id="jarak" step="0.1" placeholder="Contoh: 3.7">
@@ -76,7 +56,7 @@
     <label>Cuaca:</label>
     <label><input type="radio" name="cuaca" value="cerah" checked> Cerah</label>
     <label><input type="radio" name="cuaca" value="ringan"> Hujan Ringan (+Rp1.000)</label>
-    <label><input type="radio" name="cuaca" value="deras"> Hujan Deras (+Rp2.000)</label> 
+    <label><input type="radio" name="cuaca" value="deras"> Hujan Deras (+Rp2.000)</label>
   </div>
 
   <div class="radio-group">
@@ -109,6 +89,43 @@
   <div class="result" id="hasil"></div>
 
   <script>
+    const map = L.map('map').setView([-7.5596, 110.8534], 14);
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+      attribution: '© OpenStreetMap'
+    }).addTo(map);
+
+    let startMarker = null;
+    let endMarker = null;
+    let routingControl = null;
+
+    map.on('click', function (e) {
+      if (!startMarker) {
+        startMarker = L.marker(e.latlng).addTo(map);
+      } else if (!endMarker) {
+        endMarker = L.marker(e.latlng).addTo(map);
+
+        routingControl = L.Routing.control({
+          waypoints: [startMarker.getLatLng(), endMarker.getLatLng()],
+          routeWhileDragging: false,
+          show: false,
+          addWaypoints: false
+        })
+        .on('routesfound', function(e) {
+          const distance = e.routes[0].summary.totalDistance / 1000;
+          document.getElementById("jarak").value = distance.toFixed(2);
+        })
+        .addTo(map);
+      } else {
+        map.removeLayer(startMarker);
+        map.removeLayer(endMarker);
+        if (routingControl) map.removeControl(routingControl);
+        startMarker = L.marker(e.latlng).addTo(map);
+        endMarker = null;
+        routingControl = null;
+        document.getElementById("jarak").value = "";
+      }
+    });
+
     function hitungTarif() {
       const jarak = parseFloat(document.getElementById("jarak").value);
       const parkir = document.getElementById("parkir").checked;
@@ -123,11 +140,9 @@
         document.getElementById("hasil").textContent = "Masukkan jarak yang valid!";
         return;
       }
-
-      let tarif = 0;
-      if (jarak <= 2) {
-        tarif = 4000;
-      } else if (jarak <= 6) {
+      if (jarak <= 1.5) {
+        tarif = 5000;
+    } else if (jarak <= 6) {
         if (jarak <= 3) tarif = 7000;
         else if (jarak <= 3.5) tarif = 8500;
         else if (jarak <= 4) tarif = 10000;
@@ -135,15 +150,21 @@
         else if (jarak <= 5) tarif = 13000;
         else if (jarak <= 5.5) tarif = 14500;
         else tarif = 15000;
-      } else if (jarak <= 10) {
+    } else if (jarak <= 10) {
         if (jarak <= 7) tarif = 17000;
         else if (jarak <= 8) tarif = 18000;
         else if (jarak <= 9) tarif = 19000;
         else tarif = 20000;
-      } else {
-        tarif = 21000 + Math.ceil(jarak - 11) * 1000;
-      }
-
+    } else if (jarak <= 15) {
+        if (jarak <= 11) tarif = 21000;
+        else if (jarak <= 12) tarif = 22000;
+        else if (jarak <= 13) tarif = 23000;
+        else if (jarak <= 14) tarif = 24000;
+        else tarif = 25000;
+    } else {
+        // For distances greater than 15
+        tarif = 25000 + Math.ceil(jarak - 15) * 1000;
+    }
       if (parkir) tarif += 2000;
       if (cuaca === "ringan") tarif += 1000;
       if (cuaca === "deras") tarif += 2000;
@@ -168,9 +189,7 @@
       }
 
       const totalBayar = tarif + totalPesanan;
-
       const hasil = `📦 Rincian Jastip 📦\n\nPesanan:${rincianPesanan}\n\nJarak: ${jarak} km\nMetode Bayar: ${metode}\nCuaca: ${cuaca}\nParkir: ${parkir ? "Ya" : "Tidak"}\nPindah Titik: ${move === "pindah" ? "Ya" : "Tidak"}\nRamai: ${ramai === "ramai" ? "Ya" : "Tidak"}\nBolak-balik: ${bolakBalik ? "Ya" : "Tidak"}\n\nTarif Jasa: Rp${tarif.toLocaleString()}\nTotal Pesanan: Rp${totalPesanan.toLocaleString()}\n\n💰 Total Bayar: Rp${totalBayar.toLocaleString()}`;
-
       document.getElementById("hasil").textContent = hasil;
     }
 
