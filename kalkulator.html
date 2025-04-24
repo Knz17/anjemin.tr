@@ -161,9 +161,19 @@
         else if (jarak <= 13) tarif = 23000;
         else if (jarak <= 14) tarif = 24000;
         else tarif = 25000;
-    } else {
-        // For distances greater than 15
-        tarif = 25000 + Math.ceil(jarak - 15) * 1000;
+    } else if (jarak <= 25) {
+        if (jarak <= 21) tarif = 26000;
+        else if (jarak <= 22) tarif = 27000;
+        else if (jarak <= 23) tarif = 28000;
+        else if (jarak <= 24) tarif = 29000;
+        else tarif = 30000;
+    } else if (jarak <= 30) {
+        if (jarak <= 26) tarif = 31000;
+        else if (jarak <= 27) tarif = 32000;
+        else if (jarak <= 28) tarif = 33000;
+        else if (jarak <= 29) tarif = 34000;
+        else tarif = 35000;        // For distances greater than 15
+        tarif = 35000 + Math.ceil(jarak - 30) * 1000;
     }
       if (parkir) tarif += 2000;
       if (cuaca === "ringan") tarif += 1000;
